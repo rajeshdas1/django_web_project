@@ -17,6 +17,14 @@ pipeline {
                 }
             }
         }
+
+        stage('Build Environment') {
+            steps {
+                script {
+                    echo "Testing Build Environment.."
+                }
+            }
+        }
     }
 
     post {
