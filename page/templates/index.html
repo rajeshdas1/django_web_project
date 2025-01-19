@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>Hello World!</h1>
+<p>Welcome to my first Django project!</p>
+<table border="2" style="font-size: 30px;">
+    {% for key, server in server_details.items %}
+    <tr>
+        <td>{{key}}</td>
+        <td>{{server}}</td>
+    </tr>
+    {% endfor %}
+</table>
+</body>
+</html>

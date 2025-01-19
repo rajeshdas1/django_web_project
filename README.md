@@ -1,2 +1,1 @@
-# django_web_project
-Django Web Project
+# my_web_project

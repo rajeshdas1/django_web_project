@@ -1,0 +1,113 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Jenkins with AutoScaling Group",
+  "Resources": {
+    "MyLaunchTemplate": {
+      "Type": "AWS::EC2::LaunchTemplate",
+      "Properties": {
+        "LaunchTemplateData": {
+          "ImageId": "ami-05576a079321f21f8",
+          "InstanceType": "t2.micro",
+          "KeyName": "demo",
+          "SecurityGroupIds": [
+            {
+              "Fn::GetAtt": [
+                "MySecurityGroup",
+                "GroupId"
+              ]
+            }
+          ],
+          "UserData": {
+            "Fn::Base64": {
+              "Fn::Join": [
+                "",
+                [
+                  "#!/bin/bash -xe\n",
+                  "yum update -y\n",
+                  "wget -O /etc/yum.repos.d/jenkins.repo http://pkg.jenkins-ci.org/redhat-stable/jenkins.repo\n",
+                  "rpm --import http://pkg.jenkins-ci.org/redhat-stable/jenkins-ci.org.key\n",
+                  "yum install jenkins -y\n",
+                  "service jenkins start\n",
+                  "chkconfig jenkins on\n"
+                ]
+              ]
+            }
+          }
+        }
+      }
+    },
+    "MyAutoScalingGroup": {
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "Properties": {
+        "LaunchTemplate": {
+          "LaunchTemplateId": {
+            "Ref": "MyLaunchTemplate"
+          }
+        },
+        "AutoScalingGroupName": "Jekins Autoscaling Group",
+        "MinSize": "0",
+        "MaxSize": "3",
+        "DesiredCapacity": "1",
+        "VPCZoneIdentifier": [
+          "subnet-0123456789abcdef0"
+        ]
+      }
+    },
+    "MyScalingPolicyUp": {
+      "Type": "AWS::AutoScaling::ScalingPolicy",
+      "Properties": {
+        "AutoScalingGroupName": {
+          "Ref": "MyAutoScalingGroup"
+        },
+        "PolicyType": "TargetTrackingScaling",
+        "TargetTrackingConfiguration": {
+          "PredefinedMetricSpecification": {
+            "PredefinedMetricType": "ASGAverageCPUUtilization"
+          },
+          "TargetValue": 50.0
+        }
+      }
+    },
+    "MyScalingPolicyDown": {
+      "Type": "AWS::AutoScaling::ScalingPolicy",
+      "Properties": {
+        "AutoScalingGroupName": {
+          "Ref": "MyAutoScalingGroup"
+        },
+        "PolicyType": "TargetTrackingScaling",
+        "TargetTrackingConfiguration": {
+          "PredefinedMetricSpecification": {
+            "PredefinedMetricType": "ASGAverageCPUUtilization"
+          },
+          "TargetValue": 20.0
+        }
+      }
+    },
+    "MySecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Allow SSH and HTTP access",
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 22,
+            "ToPort": 22,
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 80,
+            "ToPort": 80,
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 8080,
+            "ToPort": 8080,
+            "CidrIp": "0.0.0.0/0"
+          }
+        ]
+      }
+    }
+  }
+}
